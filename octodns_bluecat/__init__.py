@@ -14,16 +14,20 @@ from octodns.idna import IdnaDict
 
 __VERSION__ = '0.0.1'
 
+
 class BlueCatClientException(ProviderException):
     pass
+
 
 class BlueCatClientNotFound(BlueCatClientException):
     def __init__(self):
         super().__init__('Not Found')
 
+
 class BlueCatClientUnauthorized(BlueCatClientException):
     def __init__(self):
         super().__init__('Unauthorized')
+
 
 class BlueCatError(ProviderException):
     def __init__(self, data):
@@ -33,9 +37,11 @@ class BlueCatError(ProviderException):
             message = 'BlueCatError error'
         super().__init__(message)
 
+
 class BlueCatAuthenticationError(BlueCatError):
     def __init__(self, data):
         BlueCatError.__init__(self, data)
+
 
 class BlueCatRateLimitError(BlueCatError):
     def __init__(self, data):
@@ -66,16 +72,16 @@ class BlueCatClient(object):
         self.log.debug('_init: token=%s header=%s', token, sess.headers)
         # get the BC Configuration and View Ids
         resp = self._request(
-                'GET',
-                path='getEntityByName',
-                params = {'parentId': 0, 'name': confname, 'type': 'Configuration'}
+            'GET',
+            path='getEntityByName',
+            params={'parentId': 0, 'name': confname, 'type': 'Configuration'}
         )
         self.log.debug('_init: conf_entity: %s', resp)
         conf_id = resp['id']
         rv = self._request(
-                'GET',
-                path='getEntityByName',
-                params = {'parentId': conf_id, 'name': viewname, 'type': 'View'}
+            'GET',
+            path='getEntityByName',
+            params={'parentId': conf_id, 'name': viewname, 'type': 'View'}
         )
         self.log.debug('_init: view_entity: %s', rv)
         view_id = rv['id']
@@ -127,7 +133,6 @@ class BlueCatClient(object):
                 ents.append(json.loads(decoded_line))
         return ents
 
-
     def _export_leaf_zone_entities(self):
         ents = []
         zones = self._export_zone_entities()
@@ -158,7 +163,7 @@ class BlueCatClient(object):
             return True
         else:
             return False
-        
+
 
 class BlueCatProvider(BaseProvider):
     SUPPORTS_GEO = False
@@ -199,32 +204,33 @@ class BlueCatProvider(BaseProvider):
         'CNAME': {'obj_type': 'AliasRecord', 'prop_keys': ['linkedRecordName']},
         'MX': {'obj_type': 'MXRecord', 'prop_keys': ['linkedRecordName']},
         'TXT': {'obj_type': 'TXTRecord', 'prop_keys': ['txt']},
-        'HINFO': {'obj_type': 'HINFORecord', 'prop_keys': ['cpu','os']},
+        'HINFO': {'obj_type': 'HINFORecord', 'prop_keys': ['cpu', 'os']},
         'a': {'obj_type': 'HostRecord', 'prop_keys': ['addresses']},
         'A': {'obj_type': 'GenericRecord', 'prop_keys': ['rdata']},
         'AAAA': {'obj_type': 'GenericRecord', 'prop_keys': ['rdata']},
         'PTR': {'obj_type': 'GenericRecord', 'prop_keys': ['rdata']},
         'SPF': {'obj_type': 'GenericRecord', 'prop_keys': ['rdata']},
-        'NAPTR': {'obj_type': 'NAPTRRecord', 'prop_keys': ['regexp', 'service', 'preference', 'flags', 'replacement', 'order']},
+        'NAPTR': {'obj_type': 'NAPTRRecord',
+                  'prop_keys': ['regexp', 'service', 'preference', 'flags', 'replacement', 'order']},
         'SRV': {'obj_type': 'SRVRecord', 'prop_keys': ['linkedRecordName', 'port', 'weight', 'priority']},
-        }
+    }
 
     MIN_TTL = 3600
     TIMEOUT = 15
 
     def __init__(
-        self,
-        id,
-        endpoint=None,
-        username=None,
-        password=None,
-        confname=None,
-        viewname=None,
-        token=None,
-        retry_count=4,
-        retry_period=250,
-        *args,
-        **kwargs
+            self,
+            id,
+            endpoint=None,
+            username=None,
+            password=None,
+            confname=None,
+            viewname=None,
+            token=None,
+            retry_count=4,
+            retry_period=250,
+            *args,
+            **kwargs
     ):
         self.log = getLogger('BlueCatProvider[{id}]')
         self.log.debug(f'__init__: id={id}, username={username}, token=***, password=***')
@@ -253,16 +259,16 @@ class BlueCatProvider(BaseProvider):
         self.log.debug('_init: token=%s header=%s', token, sess.headers)
         # get the BC Configuration and View Ids
         rv = self._request(
-                'GET',
-                path='getEntityByName',
-                params = {'parentId': 0, 'name': confname, 'type': 'Configuration'}
+            'GET',
+            path='getEntityByName',
+            params={'parentId': 0, 'name': confname, 'type': 'Configuration'}
         )
         self.log.debug('_init: conf_entity: %s', rv)
         conf_id = rv['id']
         rv = self._request(
-                'GET',
-                path='getEntityByName',
-                params = {'parentId': conf_id, 'name': viewname, 'type': 'View'}
+            'GET',
+            path='getEntityByName',
+            params={'parentId': conf_id, 'name': viewname, 'type': 'View'}
         )
         self.log.debug('_init: view_entity: %s', rv)
         view_id = rv['id']
@@ -333,37 +339,126 @@ class BlueCatProvider(BaseProvider):
         return self._zones
 
     """
-    All RRs using ExportEntities and a get_entitity tree selector:
-    {'name': 'generic', 'id': 2915663, 'type': 'GenericRecord', 'properties': {'comments': 'Generic generic record', 'absoluteName': 'generic.123.test', 'rdata': '128.100.102.10', 'type': 'A', 'ttl': 7200, 'parentId': 2915662, 'parentType': 'Zone'}}
-    {'name': 'q278_test', 'id': 2915683, 'type': 'GenericRecord', 'properties': {'comments': 'Aure like record', 'absoluteName': 'q278_test.bozo.test', 'rdata': '10.141.1.2', 'type': 'A', 'parentId': 2915662, 'parentType': 'Zone'}}
-    {'name': 'ptr', 'id': 2917713, 'type': 'GenericRecord', 'properties': {'comments': 'Adding a PTR record', 'absoluteName': 'ptr.123.test', 'rdata': '10.141.10.1', 'type': 'PTR', 'ttl': 900, 'parentId': 2915662, 'parentType': 'Zone'}}
-    {'name': 'spf', 'id': 2917715, 'type': 'GenericRecord', 'properties': {'comments': 'SPF record test', 'absoluteName': 'spf.123.test', 'rdata': 'Funky SPF data', 'type': 'SPF', 'ttl': 9999, 'parentId': 2915662, 'parentType': 'Zone'}}
-    {'name': 'text', 'id': 2915664, 'type': 'TXTRecord', 'properties': {'txt': 'Test Text Record', 'comments': 'Generic TXT Record', 'absoluteName': 'text.bozo.test', 'parentId': 2915662, 'parentType': 'Zone'}}
-    {'name': 'moretext', 'id': 2915665, 'type': 'TXTRecord', 'properties': {'txt': 'Two Txt Records', 'comments': 'YATR OK', 'absoluteName': 'moretext.bozo.test', 'parentId': 2915662, 'parentType': 'Zone'}}
-    {'name': 'mx', 'id': 2915667, 'type': 'GenericRecord', 'properties': {'comments': 'SMTP host', 'absoluteName': 'mx.bozo.test', 'rdata': '128.100.103.17', 'type': 'A', 'parentId': 2915662, 'parentType': 'Zone'}}
-    {'name': 'mail', 'id': 2915671, 'type': 'MXRecord', 'properties': {'comments': 'Generic MX record', 'linkedRecordName': 'mx.bozo.test', 'absoluteName': 'mail.bozo.test', 'priority': 10, 'parentId': 2915662, 'parentType': 'Zone'}}
-    {'name': 'mx', 'id': 2915672, 'type': 'HINFORecord', 'properties': {'comments': 'Generic HINFO record', 'os': 'OpenBSD', 'absoluteName': 'mx.bozo.test', 'cpu': 'x86', 'parentId': 2915662, 'parentType': 'Zone'}}
-    {'name': 'mailer', 'id': 2915674, 'type': 'AliasRecord', 'properties': {'comments': 'Generic CNAME', 'linkedRecordName': 'mx.bozo.test', 'absoluteName': 'mailer.bozo.test', 'parentId': 2915662, 'parentType': 'Zone'}}
-    {'name': 'host', 'id': 2915676, 'type': 'HostRecord', 'properties': {'addresses': '10.10.10.10', 'comments': 'Generic Host record', 'absoluteName': 'host.bozo.test', 'reverseRecord': True, 'addressIds': '2520866', 'parentId': 2915662, 'parentType': 'Zone'}}
-    {'name': 'toast', 'id': 2915677, 'type': 'AliasRecord', 'properties': {'comments': 'Generic Host record', 'linkedRecordName': 'host.bozo.test', 'absoluteName': 'toast.bozo.test', 'parentId': 2915662, 'parentType': 'Zone'}}
-    {'name': 'naptr', 'id': 2915679, 'type': 'NAPTRRecord', 'properties': {'regexp': '!^.*$!sip:customer-service@bozo.test!', 'comments': 'Test NAPTR record', 'absoluteName': 'naptr.bozo.test', 'service': 'SIP', 'preference': 10, 'flags': 'S', 'replacement': 'mx.bozo.test', 'parentId': 2915662, 'parentType': 'Zone', 'order': 100}}
-    {'name': 'sipper', 'id': 2915682, 'type': 'SRVRecord', 'properties': {'comments': 'Generic SRV record', 'linkedRecordName': 'host.bozo.test', 'port': 5060, 'absoluteName': 'sipper.bozo.test', 'weight': 20, 'priority': 10, 'parentId': 2915662, 'parentType': 'Zone'}}
+    All RRs using ExportEntities and a get_entity tree selector:
+    {
+        'name': 'generic', 'id': 2915663, 'type': 'GenericRecord',
+        'properties': {'comments': 'Generic generic record', 'absoluteName': 'generic.123.test',
+        'rdata': '128.100.102.10', 'type': 'A', 'ttl': 7200, 'parentId': 2915662, 'parentType': 'Zone'}
+    }
+    {
+        'name': 'q278_test', 'id': 2915683, 'type': 'GenericRecord',
+        'properties': {'comments': 'Aure like record', 'absoluteName': 'q278_test.bozo.test',
+         'rdata': '10.141.1.2', 'type': 'A', 'parentId': 2915662, 'parentType': 'Zone'}
+    }
+    {
+        'name': 'ptr', 'id': 2917713, 'type': 'GenericRecord',
+        'properties':
+        {
+        'comments': 'Adding a PTR record', 'absoluteName': 'ptr.123.test',
+        'rdata': '10.141.10.1', 'type': 'PTR', 'ttl': 900, 'parentId': 2915662, 'parentType': 'Zone'
+        }
+    }
+    {
+    'name': 'spf', 'id': 2917715, 'type': 'GenericRecord',
+    'properties':
+        {
+        'comments': 'SPF record test', 'absoluteName': 'spf.123.test',
+        'rdata': 'Funky SPF data', 'type': 'SPF', 'ttl': 9999, 'parentId': 2915662, 'parentType': 'Zone'
+        }
+    }
+    {
+    'name': 'text', 'id': 2915664, 'type': 'TXTRecord',
+    'properties':
+        {
+          'txt': 'Test Text Record', 'comments': 'Generic TXT Record',
+           'absoluteName': 'text.bozo.test', 'parentId': 2915662, 'parentType': 'Zone'
+        }
+    }
+    {
+        'name': 'moretext', 'id': 2915665, 'type': 'TXTRecord',
+        'properties':
+             {
+             'txt': 'Two Txt Records', 'comments': 'YATR OK',
+             'absoluteName': 'moretext.bozo.test', 'parentId': 2915662, 'parentType': 'Zone'
+             }
+    }
+    
+    {
+        'name': 'mail', 'id': 2915671, 'type': 'MXRecord',
+        'properties':
+            {
+                'comments': 'Generic MX record', 'linkedRecordName': 'mx.bozo.test',
+                'absoluteName': 'mail.bozo.test', 'priority': 10, 'parentId': 2915662, 'parentType': 'Zone'
+            }
+    }
+    {
+        'name': 'mx', 'id': 2915672, 'type': 'HINFORecord',
+        'properties':
+            {
+                'comments': 'Generic HINFO record', 'os': 'OpenBSD',
+                'absoluteName': 'mx.bozo.test', 'cpu': 'x86', 'parentId': 2915662, 'parentType': 'Zone'
+            }
+    }
+    {
+        'name': 'mailer', 'id': 2915674, 'type': 'AliasRecord',
+        'properties':
+            {
+                'comments': 'Generic CNAME', 'linkedRecordName': 'mx.bozo.test',
+                'absoluteName': 'mailer.bozo.test', 'parentId': 2915662, 'parentType': 'Zone'
+            }
+    }
+    {
+        'name': 'host', 'id': 2915676, 'type': 'HostRecord',
+        'properties':
+            {
+                'addresses': '10.10.10.10', 'comments': 'Generic Host record',
+                'absoluteName': 'host.bozo.test', 'reverseRecord': True,
+                'addressIds': '2520866', 'parentId': 2915662, 'parentType': 'Zone'
+            }
+    }
+    {
+        'name': 'naptr', 'id': 2915679, 'type': 'NAPTRRecord',
+        'properties':
+            {
+               'regexp': '!^.*$!sip:customer-service@bozo.test!', 'comments': 'Test NAPTR record',
+               'absoluteName': 'naptr.bozo.test', 'service': 'SIP', 'preference': 10, 'flags': 'S',
+               'replacement': 'mx.bozo.test', 'parentId': 2915662, 'parentType': 'Zone', 'order': 100
+            }
+    }
+    {
+        'name': 'sipper', 'id': 2915682, 'type': 'SRVRecord',
+        'properties':
+            {
+            'comments': 'Generic SRV record', 'linkedRecordName': 'host.bozo.test', 'port': 5060,
+            'absoluteName': 'sipper.bozo.test', 'weight': 20, 'priority': 10, 'parentId': 2915662, 'parentType': 'Zone'
+            }
+    }
 
     Format of RRs. from getEntities
     params = {'parentId': id, type='GenericRecord', start=0, count=100}
     Generic Records:
     [
-     { 'id': 2866216, 'name': 'Q277_test', 'type': 'GenericRecord',
-     'properties': 'comments=A solo A Resource Record|absoluteName=Q277_test.277.privatelink.ods.opinsights.azure.com|type=A|rdata=10.141.45.196|'},
-     { 'id': 2866849, 'name': 'n277_test', 'type': 'GenericRecord',
-     'properties': 'comments=A solo A Resource Record|absoluteName=n277_test.277.privatelink.ods.opinsights.azure.com|type=A|rdata=10.141.118.199|'}
+    {
+    'id': 2866216, 'name': 'Q277_test', 'type': 'GenericRecord',
+    'properties':
+    'comments=An A RR|absoluteName=Q277_test.277.privatelink.ods.opinsights.azure.com|type=A|rdata=10.141.45.196|'
+    },
+    {
+    'id': 2866849, 'name': 'n277_test', 'type': 'GenericRecord',
+    'properties':
+    'comments=A RR|absoluteName=n277_test.277.privatelink.ods.opinsights.azure.com|type=A|rdata=10.141.118.199|'
+    }
     ]
 
     MX Records
     [
-    {'id': 2429335, 'name': '', 'type': 'MXRecord'}, 'properties': 'ttl=86400|absoluteName=theta.utoronto.ca|linkedRecordName=alt2.aspmx.l.google.com|priority=5|',
-    {'id': 2429340, 'name': '', 'type': 'MXRecord'}, 'properties': 'ttl=86400|absoluteName=lcd.utoronto.ca|linkedRecordName=aspmx3.googlemail.com|priority=10|',
-    {'id': 2429341, 'name': '', 'type': 'MXRecord'} 'properties': 'ttl=86400|absoluteName=lcd.utoronto.ca|linkedRecordName=aspmx2.googlemail.com|priority=10|',
+    {
+    'id': 2429335, 'name': '', 'type': 'MXRecord'},
+    'properties': 'ttl=86400|absoluteName=theta.utoronto.ca|linkedRecordName=alt2.aspmx.l.google.com|priority=5|',
+    {'id': 2429340, 'name': '', 'type': 'MXRecord'},
+    'properties': 'ttl=86400|absoluteName=lcd.utoronto.ca|linkedRecordName=aspmx3.googlemail.com|priority=10|',
+    {'id': 2429341, 'name': '', 'type': 'MXRecord'}
+     'properties': 'ttl=86400|absoluteName=lcd.utoronto.ca|linkedRecordName=aspmx2.googlemail.com|priority=10|',
     ]
     """
 
@@ -448,7 +543,7 @@ class BlueCatProvider(BaseProvider):
         only = records[0]
         for r in records:
             props = r['properties']
-            values.append({ 'os': props['os'], 'cpu': props['cpu']})
+            values.append({'os': props['os'], 'cpu': props['cpu']})
         return {
             'ttl': self._ttl_data(only['properties']),
             'type': _type,
@@ -463,7 +558,7 @@ class BlueCatProvider(BaseProvider):
             values.append(
                 {
                     'preference': props['priority'],
-                    'exchange': f'{props["linkedRecordName"]}.' 
+                    'exchange': f'{props["linkedRecordName"]}.'
                 }
             )
         return {
@@ -506,8 +601,11 @@ class BlueCatProvider(BaseProvider):
 
     BC Export Entities -> get_entity_tree format: JSON
     {
-     'name': 'sipper', 'id': 2915682, 'type': 'SRVRecord',
-     'properties': {'comments': 'Generic SRV record', 'linkedRecordName': 'host.bozo.test', 'port': 5060, 'absoluteName': 'sipper.bozo.test', 'weight': 20, 'priority': 10, 'parentId': 2915662, 'parentType': 'Zone'}
+    'name': 'sipper', 'id': 2915682, 'type': 'SRVRecord',
+    'properties':
+    {
+    'comments': 'Generic SRV record', 'linkedRecordName': 'host.bozo.test', 'port': 5060,
+    'absoluteName': 'sipper.bozo.test', 'weight': 20, 'priority': 10, 'parentId': 2915662, 'parentType': 'Zone'}
     }
     """
 
@@ -576,15 +674,15 @@ class BlueCatProvider(BaseProvider):
         before = len(zone.records)
         for name, types in values.items():
             for _type, records in types.items():
-               data_for = getattr(self, f'_data_for_{_type}')
-               record = Record.new(
-                   zone,
-                   name,
-                   data_for(_type, records),
-                   source=self,
-                   lenient=lenient,
-               )
-               zone.add_record(record, lenient=lenient)
+                data_for = getattr(self, f'_data_for_{_type}')
+                record = Record.new(
+                    zone,
+                    name,
+                    data_for(_type, records),
+                    source=self,
+                    lenient=lenient,
+                )
+                zone.add_record(record, lenient=lenient)
 
         exists = zone.name in self._zone_records
         self.log.info(
@@ -613,15 +711,16 @@ class BlueCatProvider(BaseProvider):
          'properties': 'comments=Test NAPTR record|absoluteName=naptr.123.test|order=100|preference=10|service=SIP|regexp=!^.*$!sip:customer-service@bozo.test!|replacement=mx.bozo.test|flags=S|'}
 
     """
+
     def _params_for_NAPTR(self, record):
         zone_name = record.zone.name
         fqdn = f'{record.name}.{zone_name}'[:-1]
         for value in record.values:
             props = f'comments={self.comment}|ttl={record.ttl}|absoluteName={fqdn}|order={value.order}|preference={value.preference}|service=value.service|regexp={value.regexp}|replacement={value.replacement}|flags={value.flags}'
             entity = {
-                    'name': record.name,
-                    'type': f'{record._type}Record',
-                    'properties': props
+                'name': record.name,
+                'type': f'{record._type}Record',
+                'properties': props
             }
             yield entity
 
@@ -629,14 +728,15 @@ class BlueCatProvider(BaseProvider):
     BC addEntity format
     {'id': 2915674, 'name': 'mailer', 'type': 'AliasRecord', 'properties': 'comments=Generic CNAME|absoluteName=mailer.123.test|linkedRecordName=mx.bozo.test|'}
     """
+
     def _params_for_CNAME(self, record):
         zone_name = record.zone.name
         fqdn = f'{record.name}.{zone_name}'[:-1]
         props = f'comments={self.comment}|ttl={record.ttl}|absoluteName={fqdn}|linkedRecordName={record.value}|'
         entity = {
-                'name': record.name,
-                'type': 'AliasRecord',
-                'properties': props
+            'name': record.name,
+            'type': 'AliasRecord',
+            'properties': props
         }
         yield entity
 
@@ -644,6 +744,7 @@ class BlueCatProvider(BaseProvider):
     BC addEntity format
     {'id': 2915671, 'name': 'mail', 'type': 'MXRecord', 'properties': 'comments=Generic MX record|absoluteName=mail.123.test|linkedRecordName=mx.bozo.test|priority=10|'}
     """
+
     def _params_for_MX(self, record):
         zone_name = record.zone.name
         fqdn = f'{record.name}.{zone_name}'[:-1]
@@ -674,15 +775,16 @@ class BlueCatProvider(BaseProvider):
     }
 
     """
+
     def _params_for_SRV(self, record):
         zone_name = record.zone.name
         fqdn = f'{record.name}.{zone_name}'[:-1]
         for value in record.values:
             props = f'comments={self.comment}|ttl={record.ttl}|absoluteName={fqdn}|linkedRecordName={value.target[:-1]}|port={value.port}|priority={value.priority}|weight={value.weight}|'
             entity = {
-                    'name': record.name,
-                    'type': f'{record._type}Record',
-                    'properties': props,
+                'name': record.name,
+                'type': f'{record._type}Record',
+                'properties': props,
             }
             yield entity
 
@@ -690,6 +792,7 @@ class BlueCatProvider(BaseProvider):
     TXTRecord Entity
     {'id': 2519630, 'name': '', 'type': 'TXTRecord', 'properties': 'comments=Zone Information|ttl=7600|absoluteName=yes.uoft.ca|txt=STOP GO|'}
     """
+
     def _params_for_TXT(self, record):
         zone_name = record.zone.name
         fqdn = f'{record.name}.{zone_name}'[:-1]
@@ -708,6 +811,7 @@ class BlueCatProvider(BaseProvider):
     GenericRecord: A record
     {'id': 2915663, 'name': 'generic', 'type': 'GenericRecord', 'properties': 'comments=Generic generic record|ttl=7200|absoluteName=generic.123.test|type=A|rdata=128.100.102.10|'}
     """
+
     def _params_for_multiple(self, record):
         zone_name = record.zone.name
         fqdn = f'{record.name}.{zone_name}'[:-1]
@@ -737,7 +841,6 @@ class BlueCatProvider(BaseProvider):
         path = 'delete'
         params = {'objectId': ent_id}
         self._try_request('DELETE', path, params=params)
-
 
     def _apply_Create(self, change):
         new = change.new
@@ -778,7 +881,7 @@ class BlueCatProvider(BaseProvider):
             self.log.debug('_apply:   no matching zone, creating')
             data = {
                 'parentId': self.view_id,
-                'absoluteName': name[:-1], 
+                'absoluteName': name[:-1],
                 'properties': 'deployable=false',
             }
             resp = self._try_request('POST', 'addZone', data=data)
