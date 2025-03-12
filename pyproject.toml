@@ -1,0 +1,25 @@
+[project]
+name = "octodns-bluecat"
+description = "An octodns provider library for BC Integrity v2 for octodns"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Russell Sutherland", email = "russell.sutherland@utoronto.ca" }
+]
+version = "0.1.0"
+
+requires-python = ">=3.12"
+dependencies = [
+    "octodns>=1.11.0",
+    "requests>=2.32.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest >= 7.0",
+    "pytest-recording >= 0.13"
+]
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
